@@ -46,17 +46,19 @@ const ImageRenamerZipper: React.FC = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const uploadedFiles = e.target.files ? Array.from(e.target.files) : [];
-    
+
     const validatedFiles = uploadedFiles
       .filter((file) => file.size > 0)
-      .map(file => ({
+      .map((file) => ({
         file,
-        name: file.name || `image-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+        name:
+          file.name ||
+          `image-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
       }));
 
     const filesWithPreview = validatedFiles.map((item) => ({
       file: item.file,
-      preview: URL.createObjectURL(item.file)
+      preview: URL.createObjectURL(item.file),
     }));
 
     setFiles(filesWithPreview);
@@ -64,7 +66,7 @@ const ImageRenamerZipper: React.FC = () => {
 
   const handleDownload = async (): Promise<void> => {
     if (!files.length) {
-      alert("No files uploaded.");
+      alert("No se han subido archivos.");
       return;
     }
 
@@ -78,10 +80,10 @@ const ImageRenamerZipper: React.FC = () => {
     try {
       const entries = files.map((item, index) => {
         const originalName = item.file.name || `file-${index + 1}`;
-        const extension = originalName.includes('.') 
-          ? originalName.slice(originalName.lastIndexOf('.')) 
-          : '';
-        
+        const extension = originalName.includes(".")
+          ? originalName.slice(originalName.lastIndexOf("."))
+          : "";
+
         return {
           name: `${nameArray[index]}${extension}`,
           input: item.file,
@@ -89,7 +91,7 @@ const ImageRenamerZipper: React.FC = () => {
       });
 
       const blob = await downloadZip(entries).blob();
-      
+
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -99,83 +101,85 @@ const ImageRenamerZipper: React.FC = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error generating ZIP:", error);
-      alert("Error generating ZIP file");
+      console.error("Error generando ZIP:", error);
+      alert("Error genenrando el archivo ZIP");
     }
   };
 
   return (
-<div className="p-4 max-w-2xl mx-auto">
-  <h1 className="text-2xl font-bold mb-6 text-gray-800">
-    Renombrador y Compresor de Imágenes
-  </h1>
-  
-  <div className="mb-6">
-    <label className="block mb-2 font-medium text-gray-700">
-      Nombres (uno por línea):
-    </label>
-    <textarea
-      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-      rows={6}
-      value={names}
-      onChange={(e) => setNames(e.target.value)}
-      placeholder="Ingresa los nombres para los archivos..."
-    />
-  </div>
+    <div className="p-4 max-w-2xl w-full mx-auto">
+      <h1 className="text-2xl font-bold mb-6 text-primary">
+        Renombrador y Compresor de Imágenes
+      </h1>
 
-  <div className="mb-6">
-    <label className="block mb-2 font-medium text-gray-700">
-      Subir Imágenes:
-    </label>
-    <input
-      type="file"
-      multiple
-      accept="image/*"
-      onChange={handleFileChange}
-      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-    />
-    <p className="mt-2 text-sm text-red-500">
-      {files.some(f => !f.file.name) && "Algunos archivos fueron renombrados automáticamente"}
-    </p>
-  </div>
+      <div className="mb-6">
+        <label className="block mb-2 font-medium text-neutral-content">
+          Nombres (uno por línea):
+        </label>
+        <textarea
+          className="textarea textarea-primary text-sky-50 w-full"
+          rows={6}
+          value={names}
+          onChange={(e) => setNames(e.target.value)}
+          placeholder="Ingresa los nombres para los archivos..."
+        />
+      </div>
 
-  <button
-    onClick={handleDownload}
-    className="w-full bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-  >
-    Descargar como ZIP
-  </button>
+      <div className="mb-6">
+        <label className="block mb-2 font-medium text-neutral-content">
+          Subir Imágenes:
+        </label>
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleFileChange}
+          className="file-input file-input-primary file-input-md w-full max-w-xs"
+        />
+        <p className="mt-2 text-sm text-red-500">
+          {files.some((f) => !f.file.name) &&
+            "Algunos archivos fueron renombrados automáticamente"}
+        </p>
+      </div>
 
-  {files.length > 0 && (
-    <div className="mt-8">
-      <h2 className="text-lg font-semibold mb-3 text-gray-800">
-        Archivos Subidos ({files.length})
-      </h2>
-      <ul className="space-y-2">
-        {files.map((item, index) => (
-          <li
-            key={index}
-            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-          >
-            <div className="flex items-center">
-              <Image
-                src={item.preview}
-                alt={item.file.name}
-                width={100}
-                height={100}
-                className="w-12 h-12 object-cover rounded mr-3"
-              />
-              <span className="text-gray-600">{item.file.name}</span>
-            </div>
-            <span className="text-sm text-gray-500">
-              {(item.file.size / 1024).toFixed(1)} KB
-            </span>
-          </li>
-        ))}
-      </ul>
+      <button onClick={handleDownload} className="btn btn-primary w-full">
+        Descargar como ZIP
+      </button>
+
+      {files.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold mb-3 text-neutral-content">
+            Archivos Subidos ({files.length})
+          </h2>
+          <ul className="space-y-2">
+            {files.map((item, index) => (
+              <li
+                key={index}
+                className="card card-side bg-base-300 shadow-xl"
+              >
+                <div className="avatar">
+                  <figure className="w-28 aspect-square bg-base-200 rounded-l-box">
+                    <Image
+                      src={item.preview}
+                      alt={item.file.name}
+                      width={100}
+                      height={100}
+                      className="object-cover"
+                    />
+                  </figure>
+                </div>
+                <div className="card-body w-full">
+                  <span className="sm:max-w-96 max-w-60 text-neutral-content overflow-hidden text-nowrap text-ellipsis">{item.file.name}</span>
+                  <span className="text-base-content">
+                    {(item.file.size / 1024).toFixed(1)} KB
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
-  )}
-</div>
   );
 };
 
