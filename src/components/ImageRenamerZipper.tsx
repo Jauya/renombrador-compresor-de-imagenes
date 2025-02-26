@@ -10,26 +10,12 @@ interface FileWithPreview {
 }
 
 const sanitizeFilename = (name: string): string => {
-  const replacements: { [key: string]: string } = {
-    ñ: "n",
-    á: "a",
-    é: "e",
-    í: "i",
-    ó: "o",
-    ú: "u",
-    Á: "A",
-    É: "E",
-    Í: "I",
-    Ó: "O",
-    Ú: "U",
-  };
-
   return name
-    .trim()
     .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[ñáéíóúÁÉÍÓÚ]/g, (match) => replacements[match] || match)
-    .replace(/[^a-z0-9\-]/g, "");
+    .normalize("NFD") // Normaliza los caracteres con tilde
+    .replace(/\p{Diacritic}/gu, "") // Elimina diacríticos (tildes)
+    .replace(/[^a-z0-9]+/g, "-") // Reemplaza caracteres no permitidos con "-"
+    .replace(/^-+|-+$/g, ""); // Elimina guiones al inicio o final
 };
 
 const ImageRenamerZipper: React.FC = () => {
@@ -153,10 +139,7 @@ const ImageRenamerZipper: React.FC = () => {
           </h2>
           <ul className="space-y-2">
             {files.map((item, index) => (
-              <li
-                key={index}
-                className="card card-side bg-base-300 shadow-xl"
-              >
+              <li key={index} className="card card-side bg-base-300 shadow-xl">
                 <div className="avatar">
                   <figure className="w-28 aspect-square bg-base-200 rounded-l-box">
                     <Image
@@ -169,7 +152,9 @@ const ImageRenamerZipper: React.FC = () => {
                   </figure>
                 </div>
                 <div className="card-body w-full">
-                  <span className="sm:max-w-96 max-w-60 text-neutral-content overflow-hidden text-nowrap text-ellipsis">{item.file.name}</span>
+                  <span className="sm:max-w-96 max-w-60 text-neutral-content overflow-hidden text-nowrap text-ellipsis">
+                    {item.file.name}
+                  </span>
                   <span className="text-base-content">
                     {(item.file.size / 1024).toFixed(1)} KB
                   </span>
