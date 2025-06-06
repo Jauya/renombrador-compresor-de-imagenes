@@ -12,10 +12,24 @@ interface FileWithPreview {
 const sanitizeFilename = (name: string): string => {
   return name
     .toLowerCase()
-    .normalize("NFD") // Normaliza los caracteres con tilde
-    .replace(/\p{Diacritic}/gu, "") // Elimina diacríticos (tildes)
-    .replace(/[^a-z0-9]+/g, "-") // Reemplaza caracteres no permitidos con "-"
-    .replace(/^-+|-+$/g, ""); // Elimina guiones al inicio o final
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+};
+
+const makeUniqueNames = (names: string[]): string[] => {
+  const counts: Record<string, number> = {};
+  return names.map((base) => {
+    if (!counts[base]) {
+      counts[base] = 1;
+      return base;
+    } else {
+      const unique = `${base}-${counts[base]}`;
+      counts[base]++;
+      return unique;
+    }
+  });
 };
 
 const ImageRenamerZipper: React.FC = () => {
@@ -56,9 +70,15 @@ const ImageRenamerZipper: React.FC = () => {
       return;
     }
 
-    const nameArray = names.split("\n").map(sanitizeFilename);
+    const rawNames = names
+      .split("\n")
+      .map((n) => n.trim())
+      .filter((n) => n.length > 0)
+      .map(sanitizeFilename);
 
-    if (files.length !== nameArray.length) {
+    const uniqueNames = makeUniqueNames(rawNames);
+
+    if (files.length !== uniqueNames.length) {
       alert("La cantidad de archivos y los nombres deben coincidir.");
       return;
     }
@@ -71,7 +91,7 @@ const ImageRenamerZipper: React.FC = () => {
           : "";
 
         return {
-          name: `${nameArray[index]}${extension}`,
+          name: `${uniqueNames[index]}${extension}`,
           input: item.file,
         };
       });
@@ -88,80 +108,99 @@ const ImageRenamerZipper: React.FC = () => {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error generando ZIP:", error);
-      alert("Error genenrando el archivo ZIP");
+      alert("Error generando el archivo ZIP");
     }
   };
 
   return (
-    <div className="p-4 max-w-2xl w-full mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-primary">
-        Renombrador y Compresor de Imágenes
-      </h1>
-
-      <div className="mb-6">
-        <label className="block mb-2 font-medium text-neutral-content">
-          Nombres (uno por línea):
-        </label>
-        <textarea
-          className="textarea textarea-primary text-sky-50 w-full"
-          rows={6}
-          value={names}
-          onChange={(e) => setNames(e.target.value)}
-          placeholder="Ingresa los nombres para los archivos..."
-        />
-      </div>
-
-      <div className="mb-6">
-        <label className="block mb-2 font-medium text-neutral-content">
-          Subir Imágenes:
-        </label>
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={handleFileChange}
-          className="file-input file-input-primary file-input-md w-full max-w-xs"
-        />
-        <p className="mt-2 text-sm text-red-500">
-          {files.some((f) => !f.file.name) &&
-            "Algunos archivos fueron renombrados automáticamente"}
+    <div className="p-4 max-w-3xl w-full mx-auto space-y-6">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-primary mb-2">
+          Renombrador y Compresor de Imágenes
+        </h1>
+        <p className="text-neutral-content text-sm">
+          Ingresa nombres únicos para renombrar imágenes y descargarlas como ZIP
         </p>
       </div>
 
-      <button onClick={handleDownload} className="btn btn-primary w-full">
-        Descargar como ZIP
-      </button>
+      <div className="card bg-base-300 shadow-md">
+        <div className="card-body space-y-4">
+          <div>
+            <label className="block font-medium text-neutral-content mb-1">
+              Nombres (uno por línea)
+              <span className="badge badge-sm badge-outline ml-2">
+                {names.split("\n").filter((n) => n.trim()).length}
+              </span>
+            </label>
+            <textarea
+              className="textarea textarea-primary w-full text-base"
+              rows={6}
+              value={names}
+              onChange={(e) => setNames(e.target.value)}
+              placeholder="Ejemplo: imagen-de-producto\nfoto-del-evento\nlogo-final"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium text-neutral-content mb-1">
+              Subir Imágenes
+              <span className="badge badge-sm badge-outline ml-2">
+                {files.length}
+              </span>
+            </label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleFileChange}
+              className="file-input file-input-primary w-full max-w-sm"
+            />
+            {files.some((f) => !f.file.name) && (
+              <p className="mt-1 text-sm text-warning">
+                Algunos archivos fueron renombrados automáticamente
+              </p>
+            )}
+          </div>
+
+          <button onClick={handleDownload} className="btn btn-primary w-full">
+            Descargar como ZIP
+          </button>
+        </div>
+      </div>
 
       {files.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3 text-neutral-content">
-            Archivos Subidos ({files.length})
-          </h2>
-          <ul className="space-y-2">
-            {files.map((item, index) => (
-              <li key={index} className="card card-side bg-base-300 shadow-xl">
-                <div className="avatar">
-                  <figure className="w-28 aspect-square bg-base-200 rounded-l-box">
+        <div className="card bg-base-200 shadow-md">
+          <div className="card-body">
+            <h2 className="text-lg font-semibold text-neutral-content mb-2">
+              Archivos Subidos
+              <span className="ml-2 badge badge-outline">
+                {files.length}
+              </span>
+            </h2>
+            <ul className="grid sm:grid-cols-2 gap-4">
+              {files.map((item, index) => (
+                <li key={index} className="card card-side bg-base-300 shadow">
+                  <figure className="w-28 aspect-square bg-base-100 rounded-l-box overflow-hidden">
                     <Image
                       src={item.preview}
                       alt={item.file.name}
-                      width={100}
-                      height={100}
-                      className="object-cover"
+                      width={112}
+                      height={112}
+                      className="object-cover w-full h-full"
                     />
                   </figure>
-                </div>
-                <div className="card-body w-full">
-                  <span className="sm:max-w-96 max-w-60 text-neutral-content overflow-hidden text-nowrap text-ellipsis">
-                    {item.file.name}
-                  </span>
-                  <span className="text-base-content">
-                    {(item.file.size / 1024).toFixed(1)} KB
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
+                  <div className="card-body py-2 px-4">
+                    <span className="text-neutral-content font-medium text-sm truncate max-w-xs">
+                      {item.file.name}
+                    </span>
+                    <span className="text-xs text-base-content">
+                      {(item.file.size / 1024).toFixed(1)} KB
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
     </div>
