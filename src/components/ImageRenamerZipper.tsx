@@ -127,7 +127,7 @@ const ImageRenamerZipper: React.FC = () => {
         <div className="card-body space-y-4">
           <div>
             <label className="block font-medium text-neutral-content mb-1">
-              Nombres (uno por línea)
+              Nombres
               <span className="badge badge-sm badge-outline ml-2">
                 {names.split("\n").filter((n) => n.trim()).length}
               </span>
@@ -137,7 +137,7 @@ const ImageRenamerZipper: React.FC = () => {
               rows={6}
               value={names}
               onChange={(e) => setNames(e.target.value)}
-              placeholder="Ejemplo: imagen-de-producto\nfoto-del-evento\nlogo-final"
+              placeholder="Escribe los nombres de las imágenes, uno por línea."
             />
           </div>
 
